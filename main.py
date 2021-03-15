@@ -74,33 +74,13 @@ def draw_player(player):
     pass
 
 
-# Изобразява влизането в затвора
-def draw_in_jail(player):
-    if player.id == 1:
-        p1 = pygame.image.load(os.path.join('Assets', 'p1.png'))
-        p1 = pygame.transform.scale(p1, (30, 30))
-        screen.blit(p1, (75 - 15, 925 - 15))
-    elif player.id == 2:
-        p2 = pygame.image.load(os.path.join('Assets', 'p2.png'))
-        p2 = pygame.transform.scale(p2, (30, 30))
-        screen.blit(p2, (75, 925 - 15))
-    elif player.id == 3:
-        p3 = pygame.image.load(os.path.join('Assets', 'p3.png'))
-        p3 = pygame.transform.scale(p3, (30, 30))
-        screen.blit(p3, (75 - 15, 925))
-    elif player.id == 4:
-        p4 = pygame.image.load(os.path.join('Assets', 'p4.png'))
-        p4 = pygame.transform.scale(p4, (30, 30))
-        screen.blit(p4, (75, 925))
-
-
 # Проверява какво представлява полето, на което играча е стъпил
 # по - късно ще пълно пълни с различни действия за всички видове полета
 def gamespace_check(gamespace, player):
     if gamespace.id == 30 or gamespace == go_to_jail:
         player.stepped_on = jail
         player.is_in_jail = True
-        draw_in_jail(player)
+        # draw_in_jail(player)
 
 
 # Функция за изобразване за по-чист код и за да не се меша кода
@@ -229,6 +209,8 @@ def run():
                             rolled = True
                             dice1 = random.randint(1, 6)
                             dice2 = random.randint(1, 6)
+                            # dice1 = 6
+                            # dice2 = 4
                             move = dice1 + dice2
                             # При чифт
                             if dice1 == dice2:
@@ -241,12 +223,16 @@ def run():
                                     move -= 40
                                     players[current_player].money += 200
                                 players[current_player].stepped_on = spaces[players[current_player].stepped_on.id + move]
+                                gamespace_check(players[current_player].stepped_on, players[current_player])
+                                player_check(players[current_player], event, rolled)
+
                             else:
                                 if players[current_player].stepped_on.id + move >= 40:
                                     move -= 40
                                     players[current_player].money += 200
                                 players[current_player].stepped_on = spaces[players[current_player].stepped_on.id + move]
                                 gamespace_check(players[current_player].stepped_on, players[current_player])
+                                player_check(players[current_player], event, rolled)
                                 players[current_player].jail_counter = 0
                 else:
                     # Използва се за свършване на хода, налага се, защото в
