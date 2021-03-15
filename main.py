@@ -9,7 +9,8 @@ from gamespaces import *
 
 pygame.init()
 
-# За да може да ги сменяме и използваме по-лесно и да не е нужно да ги повтаряме по късно
+# За да може да ги сменяме и използваме по-лесно и да не е нужно да
+# ги повтаряме по късно
 winHeight = 1000
 winWidth = 1000
 
@@ -20,6 +21,7 @@ pygame.display.set_caption("Monopoly")
 board = pygame.image.load(os.path.join('Assets', 'board.png'))
 board = pygame.transform.scale(board, (winWidth, winHeight))
 
+
 # Клас за играч, по-късно ще будат добавени още неща като списък с имоти
 class Player:
     def __init__(self, id, money):
@@ -29,12 +31,14 @@ class Player:
         self.is_in_jail = False
         self.jail_counter = 0
         self.jail_tries = 0
+        self.loser = False
+
 
 # Използва се за циклични проверки на състоянието на играча
 def player_check(player, event, rolled):
     if player.jail_counter == 3:
-        player.reset_jail_counter()
         player.is_in_jail = True
+        player.jail_counter == 0
 
     if player.is_in_jail:
         player.stepped_on = jail
@@ -46,14 +50,8 @@ def player_check(player, event, rolled):
                 player.is_in_jail = False
 
     if player.money < 0:
-        pass
+        player.loser = True
 
-# Проверява какво представлява полето, на което играча е стъпил по - късно ще пълно пълни с различни действия за всички видове полета
-def gamespace_check(gamespace, player):
-    if gamespace.id == 30 or gamespace == go_to_jail:
-        player.stepped_on = jail
-        player.is_in_jail = True
-    pass
 
 # Изобразява подадения играч
 def draw_player(player):
@@ -76,11 +74,20 @@ def draw_player(player):
     pass
 
 
+# Проверява какво представлява полето, на което играча е стъпил
+# по - късно ще пълно пълни с различни действия за всички видове полета
+def gamespace_check(gamespace, player):
+    if gamespace.id == 30 or gamespace == go_to_jail:
+        player.stepped_on = jail
+        player.is_in_jail = True
+
+
 # Функция за изобразване за по-чист код и за да не се меша кода
 def graphics(gamestart, player_list, rolled):
     screen.fill((0, 0, 0))
 
-    # Dice roll и Money за момента се използват за дебъгване, по-късно ще има различен, по-добър дисплей
+    # Dice roll и Money за момента се използват за дебъгване, по-късно
+    # ще има различен, по-добър дисплей
     movetxt = calibri.render('Dice roll: ' + str(move), True, blue)
     screen.blit(board, (0, 0))
     screen.blit(movetxt, (700, 740))
@@ -121,6 +128,7 @@ def graphics(gamestart, player_list, rolled):
 current_player = 0
 move = 0
 players = list()
+losers = list()
 mouse_pos = (0, 0)
 
 
@@ -136,6 +144,7 @@ def run():
     rolled = False
     global players
     global mouse_pos
+    # losers = []
 
     while running:
 
@@ -143,7 +152,8 @@ def run():
         if gamestart:
             if current_player == len(players):
                 current_player = 0
-        # Да има определен refresh rate, иначе цикъла ще върви колкото се може повече и ще натоварва компютъра.
+        # Да има определен refresh rate, иначе цикъла ще върви колкото се
+        # може повече и ще натоварва компютъра.
         clock.tick(frames_per_second)
         # Изобразява играта
         graphics(gamestart, players, rolled)
@@ -158,7 +168,8 @@ def run():
                 if quit_button.isHovering(mouse_pos):
                     running = False
 
-            # Проверява дали сме в менюто и прави определн брой играчи при натискане на бутон
+            # Проверява дали сме в менюто и прави определн брой играчи при
+            # натискане на бутон
             if not gamestart:
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if two_players_button.isHovering(mouse_pos):
@@ -180,18 +191,23 @@ def run():
                         players = [player1, player2, player3, player4]
                         gamestart = True
 
-            # Проверява дали играта е почнала. Това е секцията за хвърляне на зар, местене на играча и действия при попаднало поле
+            # Проверява дали играта е почнала. Това е секцията за хвърляне
+            # на зар, местене на играча и действия при попаднало поле
             if gamestart:
+
+                if current_player == len(players):
+                    current_player = 0
                 # Циклични проверки
                 gamespace_check(players[current_player].stepped_on, players[current_player])
                 player_check(players[current_player], event, rolled)
+
                 # Проверява дали зарчето е хвърлено
                 if not rolled:
                     if event.type == pygame.MOUSEBUTTONDOWN:
                         if dice_button.isHovering(mouse_pos):
                             rolled = True
-                            dice1 = random.randint(1, 6)
-                            dice2 = random.randint(1, 6)
+                            dice1 = 6
+                            dice2 = 4
                             move = dice1 + dice2
                             # При чифт
                             if dice1 == dice2:
@@ -212,17 +228,18 @@ def run():
                                 gamespace_check(players[current_player].stepped_on, players[current_player])
                                 players[current_player].jail_counter = 0
                 else:
-                    # Използва се за свършване на хода, налага се, защото в момента бутона се рефрешва при задържане на мишката. Ще бъде оправено по-късно
-                    # Това не е функционален проблем, а по скоро графичен, придобавяне на имоти ще има действия които се изпълняват между хвърления
+                    # Използва се за свършване на хода, налага се, защото в
+                    # момента бутона се рефрешва при задържане на мишката. Ще бъде оправено по-късно
+                    # Това не е функционален проблем, а по скоро графичен,
+                    # придобавяне на имоти ще има действия които се изпълняват между хвърления
                     # Което ще оправи порблема
                     gamespace_check(players[current_player].stepped_on, players[current_player])
                     player_check(players[current_player], event, rolled)
+                    if players[current_player].loser:
+                        players.remove(players[current_player])
                     if event.type == pygame.MOUSEBUTTONDOWN:
                         if end_turn_button.isHovering(mouse_pos):
                             current_player += 1
                             rolled = False
 
             mouseHovering(event, mouse_pos)
-
-
-run()
