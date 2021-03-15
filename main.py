@@ -9,7 +9,8 @@ from gamespaces import *
 
 pygame.init()
 
-# За да може да ги сменяме и използваме по-лесно и да не е нужно да ги повтаряме по късно
+# За да може да ги сменяме и използваме по-лесно и да не е нужно да
+# ги повтаряме по късно
 winHeight = 1000
 winWidth = 1000
 
@@ -19,6 +20,7 @@ pygame.display.set_caption("Monopoly")
 # Прекръстих го на поле да няма обърквания.
 board = pygame.image.load(os.path.join('Assets', 'board.png'))
 board = pygame.transform.scale(board, (winWidth, winHeight))
+
 
 # Клас за играч, по-късно ще будат добавени още неща като списък с имоти
 class Player:
@@ -30,6 +32,7 @@ class Player:
         self.jail_counter = 0
         self.jail_tries = 0
         self.looser = False
+
 
 # Използва се за циклични проверки на състоянието на играча
 def player_check(player, event, rolled):
@@ -48,6 +51,7 @@ def player_check(player, event, rolled):
 
     if player.money < 0:
         player.looser = True
+
 
 # Изобразява подадения играч
 def draw_player(player):
@@ -69,6 +73,7 @@ def draw_player(player):
         screen.blit(p4, (player.stepped_on.x, player.stepped_on.y))
     pass
 
+
 # Изобразява влизането в затвора
 def draw_in_jail(player):
     if player.id == 1:
@@ -89,7 +94,8 @@ def draw_in_jail(player):
         screen.blit(p4, (75, 925))
 
 
-# Проверява какво представлява полето, на което играча е стъпил по - късно ще пълно пълни с различни действия за всички видове полета
+# Проверява какво представлява полето, на което играча е стъпил
+# по - късно ще пълно пълни с различни действия за всички видове полета
 def gamespace_check(gamespace, player):
     if gamespace.id == 30 or gamespace == go_to_jail:
         player.stepped_on = jail
@@ -101,7 +107,8 @@ def gamespace_check(gamespace, player):
 def graphics(gamestart, player_list, rolled):
     screen.fill((0, 0, 0))
 
-    # Dice roll и Money за момента се използват за дебъгване, по-късно ще има различен, по-добър дисплей
+    # Dice roll и Money за момента се използват за дебъгване, по-късно
+    # ще има различен, по-добър дисплей
     movetxt = calibri.render('Dice roll: ' + str(move), True, blue)
     screen.blit(board, (0, 0))
     screen.blit(movetxt, (700, 740))
@@ -166,7 +173,8 @@ def run():
         if gamestart:
             if current_player == len(players):
                 current_player = 0
-        # Да има определен refresh rate, иначе цикъла ще върви колкото се може повече и ще натоварва компютъра.
+        # Да има определен refresh rate, иначе цикъла ще върви колкото се
+        # може повече и ще натоварва компютъра.
         clock.tick(frames_per_second)
         # Изобразява играта
         graphics(gamestart, players, rolled)
@@ -181,7 +189,8 @@ def run():
                 if quit_button.isHovering(mouse_pos):
                     running = False
 
-            # Проверява дали сме в менюто и прави определн брой играчи при натискане на бутон
+            # Проверява дали сме в менюто и прави определн брой играчи при
+            # натискане на бутон
             if not gamestart:
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if two_players_button.isHovering(mouse_pos):
@@ -203,7 +212,8 @@ def run():
                         players = [player1, player2, player3, player4]
                         gamestart = True
 
-            # Проверява дали играта е почнала. Това е секцията за хвърляне на зар, местене на играча и действия при попаднало поле
+            # Проверява дали играта е почнала. Това е секцията за хвърляне
+            # на зар, местене на играча и действия при попаднало поле
             if gamestart:
 
                 if current_player == len(players):
@@ -239,8 +249,10 @@ def run():
                                 gamespace_check(players[current_player].stepped_on, players[current_player])
                                 players[current_player].jail_counter = 0
                 else:
-                    # Използва се за свършване на хода, налага се, защото в момента бутона се рефрешва при задържане на мишката. Ще бъде оправено по-късно
-                    # Това не е функционален проблем, а по скоро графичен, придобавяне на имоти ще има действия които се изпълняват между хвърления
+                    # Използва се за свършване на хода, налага се, защото в
+                    # момента бутона се рефрешва при задържане на мишката. Ще бъде оправено по-късно
+                    # Това не е функционален проблем, а по скоро графичен,
+                    # придобавяне на имоти ще има действия които се изпълняват между хвърления
                     # Което ще оправи порблема
                     gamespace_check(players[current_player].stepped_on, players[current_player])
                     player_check(players[current_player], event, rolled)
