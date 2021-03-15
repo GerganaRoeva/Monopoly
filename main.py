@@ -29,12 +29,13 @@ class Player:
         self.is_in_jail = False
         self.jail_counter = 0
         self.jail_tries = 0
+        self.looser = False
 
 # Използва се за циклични проверки на състоянието на играча
 def player_check(player, event, rolled):
     if player.jail_counter == 3:
-        player.reset_jail_counter()
         player.is_in_jail = True
+        player.jail_counter == 0
 
     if player.is_in_jail:
         player.stepped_on = jail
@@ -46,14 +47,7 @@ def player_check(player, event, rolled):
                 player.is_in_jail = False
 
     if player.money < 0:
-        pass
-
-# Проверява какво представлява полето, на което играча е стъпил по - късно ще пълно пълни с различни действия за всички видове полета
-def gamespace_check(gamespace, player):
-    if gamespace.id == 30 or gamespace == go_to_jail:
-        player.stepped_on = jail
-        player.is_in_jail = True
-    pass
+        player.looser = True
 
 # Изобразява подадения играч
 def draw_player(player):
@@ -74,6 +68,33 @@ def draw_player(player):
         p4 = pygame.transform.scale(p4, (30, 30))
         screen.blit(p4, (player.stepped_on.x, player.stepped_on.y))
     pass
+
+# Изобразява влизането в затвора
+def draw_in_jail(player):
+    if player.id == 1:
+        p1 = pygame.image.load(os.path.join('Assets', 'p1.png'))
+        p1 = pygame.transform.scale(p1, (30, 30))
+        screen.blit(p1, (75 - 15, 925 - 15))
+    elif player.id == 2:
+        p2 = pygame.image.load(os.path.join('Assets', 'p2.png'))
+        p2 = pygame.transform.scale(p2, (30, 30))
+        screen.blit(p2, (75, 925 - 15))
+    elif player.id == 3:
+        p3 = pygame.image.load(os.path.join('Assets', 'p3.png'))
+        p3 = pygame.transform.scale(p3, (30, 30))
+        screen.blit(p3, (75 - 15, 925))
+    elif player.id == 4:
+        p4 = pygame.image.load(os.path.join('Assets', 'p4.png'))
+        p4 = pygame.transform.scale(p4, (30, 30))
+        screen.blit(p4, (75, 925))
+
+
+# Проверява какво представлява полето, на което играча е стъпил по - късно ще пълно пълни с различни действия за всички видове полета
+def gamespace_check(gamespace, player):
+    if gamespace.id == 30 or gamespace == go_to_jail:
+        player.stepped_on = jail
+        player.is_in_jail = True
+        draw_in_jail(player)
 
 
 # Функция за изобразване за по-чист код и за да не се меша кода
@@ -121,6 +142,7 @@ def graphics(gamestart, player_list, rolled):
 current_player = 0
 move = 0
 players = list()
+loosers = list()
 mouse_pos = (0, 0)
 
 
@@ -136,6 +158,7 @@ def run():
     rolled = False
     global players
     global mouse_pos
+    # loosers = []
 
     while running:
 
@@ -182,9 +205,13 @@ def run():
 
             # Проверява дали играта е почнала. Това е секцията за хвърляне на зар, местене на играча и действия при попаднало поле
             if gamestart:
+
+                if current_player == len(players):
+                    current_player = 0
                 # Циклични проверки
                 gamespace_check(players[current_player].stepped_on, players[current_player])
                 player_check(players[current_player], event, rolled)
+
                 # Проверява дали зарчето е хвърлено
                 if not rolled:
                     if event.type == pygame.MOUSEBUTTONDOWN:
@@ -217,12 +244,11 @@ def run():
                     # Което ще оправи порблема
                     gamespace_check(players[current_player].stepped_on, players[current_player])
                     player_check(players[current_player], event, rolled)
+                    if players[current_player].looser:
+                        players.remove(players[current_player])
                     if event.type == pygame.MOUSEBUTTONDOWN:
                         if end_turn_button.isHovering(mouse_pos):
                             current_player += 1
                             rolled = False
 
             mouseHovering(event, mouse_pos)
-
-
-run()
