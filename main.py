@@ -21,7 +21,6 @@ pygame.display.set_caption("Monopoly")
 board = pygame.image.load(os.path.join('Assets', 'board.png'))
 board = pygame.transform.scale(board, (winWidth, winHeight))
 
-
 # не са във функцията, защото искам да са статик
 current_player = 0
 move = 0
@@ -56,11 +55,24 @@ def player_check(player, event, throws):
                 player.money -= 50
                 player.is_in_jail = False
 
-    global current_player
-
     if player.money < 0:
         player.loser = True
-        current_player += 1
+
+
+# Проверява какво представлява полето, на което играча е стъпил
+# по - късно ще пълно пълни с различни действия за всички видове полета
+def gamespace_check(gamespace, player):
+    if gamespace.id == 30 or gamespace == go_to_jail:
+        player.stepped_on = jail
+        player.is_in_jail = True
+
+
+'''
+    if gamespace.id == 4 or gamespace == tax1:
+        player.money -= 200
+
+    if gamespace.id == 38 or gamespace == tax2:
+        player.money -= 100'''
 
 
 # Изобразява подадения играч
@@ -82,21 +94,7 @@ def draw_player(player):
             p4 = pygame.image.load(os.path.join('Assets', 'p4.png'))
             p4 = pygame.transform.scale(p4, (30, 30))
             screen.blit(p4, (player.stepped_on.x, player.stepped_on.y))
-    pass
-
-
-# Проверява какво представлява полето, на което играча е стъпил
-# по - късно ще пълно пълни с различни действия за всички видове полета
-def gamespace_check(gamespace, player):
-    if gamespace.id == 30 or gamespace == go_to_jail:
-        player.stepped_on = jail
-        player.is_in_jail = True
-
-    if gamespace.id == 4 or gamespace == tax1:
-        player.money -= 200
-
-    if gamespace.id == 38 or gamespace == tax2:
-        player.money -= 100
+        pass
 
 
 # Функция за изобразване за по-чист код и за да не се меша кода
@@ -112,7 +110,9 @@ def graphics(gamestart, player_list, rolled):
         moneytxt = calibri.render('Money: ' + str(player_list[current_player].money), True, red)
         screen.blit(moneytxt, (175, 740))
         playertxt = calibri.render('Player: ' + str(player_list[current_player].id), True, orange)
-        screen.blit(playertxt, (425, 600))
+        screen.blit(playertxt, (425, 740))
+        arraytxt = calibri.render('Размер: ' + str(len(players)), True, purple)
+        screen.blit(arraytxt, (425, 700))
 
     # Изобразява всички играчи
     for i in range(len(player_list)):
@@ -143,6 +143,14 @@ def graphics(gamestart, player_list, rolled):
     pygame.display.update()
 
 
+def max_check():
+    global current_player
+    global players
+    if current_player == len(players):
+        current_player = 0
+    pass
+
+
 # Функция, за да може да се направи app init неща.
 def run():
     # Променливи дефинирани извън цикъла
@@ -162,8 +170,7 @@ def run():
 
         # Проверява дали сме минали всички играчи и се връща на първия
         if gamestart:
-            if current_player == len(players):
-                current_player = 0
+            max_check()
         # Да има определен refresh rate, иначе цикъла ще върви колкото се
         # може повече и ще натоварва компютъра.
         clock.tick(frames_per_second)
@@ -185,8 +192,8 @@ def run():
             if not gamestart:
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if two_players_button.is_hovering(mouse_pos):
-                        player1 = Player(1)
-                        player2 = Player(2)
+                        player1 = Player(1, 20)
+                        player2 = Player(2, 20)
                         players = [player1, player2]
                         gamestart = True
                     if three_players_button.is_hovering(mouse_pos):
@@ -206,10 +213,8 @@ def run():
             # Проверява дали играта е почнала. Това е секцията за хвърляне
             # на зар, местене на играча и действия при попаднало поле
             if gamestart:
-
-                if current_player == len(players):
-                    current_player = 0
                 # Циклични проверки
+                max_check()
                 gamespace_check(players[current_player].stepped_on, players[current_player])
                 player_check(players[current_player], event, throws)
 
