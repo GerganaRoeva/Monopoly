@@ -12,7 +12,7 @@ class Button:
         self.height = height
         self.text = text
         self.text_color = text_color
-        self.hitbox = pygame.Rect(x, y, width, height) # Може да се използва ако искаме да използваме функции от pygame.Rect
+        self.hitbox = pygame.Rect(x, y, width, height)  # Може да се използва ако искаме да използваме функции от pygame.Rect
 
     def show_button(self, screen, outline_color, font):
         # Прави бутона да се изборазява.
@@ -24,7 +24,7 @@ class Button:
         screen.blit(text, (
             self.x + (self.width / 2 - text.get_width() / 2), self.y + (self.height / 2 - text.get_height() / 2)))
 
-    def isHovering(self, pos):
+    def is_hovering(self, pos):
         # Проверява дали мишката е върху бутона
         # Pos е координатите на мишката
         if pos[0] > self.x and pos[0] < self.x + self.width:
@@ -35,7 +35,7 @@ class Button:
 
 
 # Бутони се създават тук:
-quit_button = Button(gray, black, 340, 200, 100, 60, 'Quit')
+quit_button = Button(red, darker_red, 340, 200, 100, 60, 'Quit')
 two_players_button = Button(gray, black, 400, 520, 200, 100, 'Two Players')
 three_players_button = Button(gray, black, 400, 630, 200, 100, 'Three Players')
 four_players_button = Button(gray, black, 400, 740, 200, 100, 'Four Players')
@@ -45,45 +45,45 @@ pay_jail_button = Button(gray, black, 425, 600, 150, 75, 'Pay Escape')
 
 
 # Функция за промяна на цвета на всички бутони
-def mouseHovering(event, pos):
+def mouse_hovering(event, pos):
     if event.type == pygame.MOUSEMOTION:
-        if quit_button.isHovering(pos):
-            quit_button.color = dark_gray
+        if quit_button.is_hovering(pos):
+            quit_button.color = dark_red
         else:
-            quit_button.color = gray
+            quit_button.color = red
 
     if event.type == pygame.MOUSEMOTION:
-        if two_players_button.isHovering(pos):
+        if two_players_button.is_hovering(pos):
             two_players_button.color = dark_gray
         else:
             two_players_button.color = gray
 
     if event.type == pygame.MOUSEMOTION:
-        if three_players_button.isHovering(pos):
+        if three_players_button.is_hovering(pos):
             three_players_button.color = dark_gray
         else:
             three_players_button.color = gray
 
     if event.type == pygame.MOUSEMOTION:
-        if four_players_button.isHovering(pos):
+        if four_players_button.is_hovering(pos):
             four_players_button.color = dark_gray
         else:
             four_players_button.color = gray
 
     if event.type == pygame.MOUSEMOTION:
-        if dice_button.isHovering(pos):
+        if dice_button.is_hovering(pos):
             dice_button.color = dark_gray
         else:
             dice_button.color = gray
 
     if event.type == pygame.MOUSEMOTION:
-        if pay_jail_button.isHovering(pos):
+        if pay_jail_button.is_hovering(pos):
             pay_jail_button.color = dark_gray
         else:
             pay_jail_button.color = gray
 
     if event.type == pygame.MOUSEMOTION:
-        if end_turn_button.isHovering(pos):
+        if end_turn_button.is_hovering(pos):
             end_turn_button.color = dark_gray
         else:
             end_turn_button.color = gray
