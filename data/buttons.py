@@ -47,7 +47,8 @@ audio_button = Button(colors.gray, colors.black, 150, 200, 120, 60, 'Audio ON/OF
 theme_button = Button(colors.gray, colors.black, 740, 150, 120, 60, 'Change Music')
 buy_button = Button(colors.gray, colors.black, 320, 680, 150, 50, 'Buy')
 auction_button = Button(colors.gray, colors.black, 520, 680, 150, 50, 'Auction')
-bild_button = Button(colors.gray, colors.black, 420, 680, 150, 50, 'Bild')
+build_button = Button(colors.gray, colors.black, 420, 580, 150, 50, 'Build')
+stop_build_button = Button(colors.gray, colors.black, 420, 680, 150, 50, 'Stop')
 
 
 # Функция за промяна на цвета на всички бутони
@@ -119,7 +120,13 @@ def mouse_hovering(event, pos):
             auction_button.color = colors.gray
 
     if event.type == pygame.MOUSEMOTION:
-        if bild_button.is_hovering(pos):
-            bild_button.color = colors.dark_gray
+        if build_button.is_hovering(pos):
+            build_button.color = colors.dark_gray
         else:
-            bild_button.color = colors.gray
+            build_button.color = colors.gray
+
+    if event.type == pygame.MOUSEMOTION:
+        if stop_build_button.is_hovering(pos):
+            stop_build_button.color = colors.dark_gray
+        else:
+            stop_build_button.color = colors.gray
