@@ -1,4 +1,5 @@
 import pygame
+import os
 
 
 # Клас за игрално поле
@@ -20,6 +21,7 @@ class Property(GameSpace):
         self.price = 0
         self.rent = 0
         self.name = name
+        self.can_build = False
         self.hitbox = pygame.Rect(x, y, 0, 0)
         if group == "brown":
             self.hitbox = pygame.Rect(x - 35, y - 65, 70, 130)
@@ -92,6 +94,48 @@ class Property(GameSpace):
             else:
                 self.price = 350
                 self.rent = [35, 175, 500, 1100, 1300, 1500]
+
+    def show_houses(self, screen):
+        rotate_angle = 0
+        hx = self.x
+        hy = self.y
+        bhx = 0
+        bhy = 0
+
+        if self.group == "brown" or self.group == "blue":
+            rotate_angle = 0
+            hx -= 35
+            hy -= 65
+            bhx = 15
+        elif self.group == "pink" or self.group == "orange":
+            rotate_angle = 270
+            hx += 35
+            hy -= 35
+            bhy = 15
+        elif self.group == "red" or self.group == "yellow":
+            rotate_angle = 180
+            hx -= 35
+            hy += 35
+            bhx = 15
+        elif self.group == "green" or self.group == "purple":
+            rotate_angle = 90
+            hx -= 65
+            hy -= 35
+            bhy = 15
+
+        for i in range(self.houses):
+            if self.houses < 5:
+                house = pygame.image.load(os.path.join('data', 'Assets', 'house.png'))
+                house = pygame.transform.scale(house, (20, 30))
+                house = pygame.transform.rotate(house, rotate_angle)
+                screen.blit(house, (hx, hy))
+                hx += bhx
+                hy += bhy
+            else:
+                house = pygame.image.load(os.path.join('data', 'Assets', 'hotel.png'))
+                house = pygame.transform.scale(house, (40, 30))
+                house = pygame.transform.rotate(house, rotate_angle)
+                screen.blit(house, (hx, hy))
 
     def is_hovering(self, pos):
         if self.hitbox.collidepoint(pos):
