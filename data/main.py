@@ -2,7 +2,7 @@ import os
 import importlib
 import random
 import pygame
-# Направих ги на отделни файлове, защото е грозно
+
 from data import buttons
 from data import gamespaces
 from data import audio
@@ -11,19 +11,16 @@ from data import fonts
 
 pygame.init()
 
-# За да може да ги сменяме и използваме по-лесно и да не е нужно да
-# ги повтаряме по късно
 winHeight = 1000
 winWidth = 1000
 
 screen = pygame.display.set_mode((winWidth, winHeight))
 pygame.display.set_caption("Monopoly")
 
-# Прекръстих го на поле да няма обърквания.
 board = pygame.image.load(os.path.join('data', 'Assets', 'board.png'))
 board = pygame.transform.scale(board, (1000, 1000))
 
-# не са във функцията, защото искам да са статик
+# не са във функцията, за да са статик
 current_player = 0
 dice = [0, 0]
 players = list()
@@ -34,7 +31,6 @@ buying = False
 building = False
 
 
-# Клас за играч, по-късно ще будат добавени още неща като списък с имоти
 class Player:
     def __init__(self, id, money=2000, stepped_on=gamespaces.go):
         self.id = id
@@ -45,12 +41,11 @@ class Player:
         self.loser = False
         self.owning = []
         self.monopolist = False
+        self.owns = False
 
 
 def is_monopolist(player, group):
     duplicates = []
-    # need = 3
-
 
     for space in player.owning:
         if space.group == "brown" or space.group == "purple":
@@ -59,19 +54,14 @@ def is_monopolist(player, group):
         else:
             need = 3
 
-        # print(need)
         for another_space in player.owning:
             if space.group == another_space.group and space.group == group and space is not another_space:
                 duplicates.append(another_space)
-                # for i in duplicates:
-                #     print(i.name)
-                # print("-----------------")
 
                 if len(duplicates) == need:
                     for i in duplicates:
                         i.can_build = True
                     player.monopolist = True
-                    # print("len " + str(len(duplicates)))
                     duplicates.clear()
                     return True
 
@@ -102,6 +92,9 @@ def player_check(player, event, throws):
                 player.money -= 50
                 player.is_in_jail = False
 
+    if player.owning:
+        player.owns = True
+
     went_bankrupt(player)
 
 
@@ -110,6 +103,7 @@ def player_check(player, event, throws):
 def gamespace_check(gamespace, player):
     global checked
     global buying
+
     if gamespace.id == 30 or gamespace == gamespaces.go_to_jail:
         player.stepped_on = gamespaces.jail
         player.is_in_jail = True
@@ -123,8 +117,9 @@ def gamespace_check(gamespace, player):
             if not gamespace.owned_by:
                 buying = True
             else:
-                player.money -= gamespace.rent[gamespace.houses]
-                gamespace.owned_by.money += gamespace.rent[gamespace.houses]
+                if not gamespace.mortgaged:
+                    player.money -= gamespace.rent[gamespace.houses]
+                    gamespace.owned_by.money += gamespace.rent[gamespace.houses]
     checked = True
 
 
@@ -150,10 +145,9 @@ def draw_player(player):
         pass
 
 
-def choose_build(player, event):
+def choose_build(player):
     can_build = []
     from_one_color = []
-    houses_in_group = 0
     groups = ['blue', 'brown', 'pink', 'orange', 'red', 'yellow', 'green', 'purple']
 
     for group in groups:
@@ -172,6 +166,7 @@ def choose_build(player, event):
                         can_build[i].can_build = False
 
     return can_build
+
 
 
 def turn_displayer(player):
@@ -199,6 +194,7 @@ def property_info(gamespace):
     if gamespace.is_hovering(mouse_pos):
         info_bg = pygame.image.load(os.path.join('data', 'Assets', 'info_bg.png'))
         info_bg = pygame.transform.scale(info_bg, (230, 400))
+        info4 = fonts.ariel.render("", True, colors.white)
         screen.blit(info_bg, (620, 440))
         owner = "никой"
         if gamespace.owned_by:
@@ -217,9 +213,14 @@ def property_info(gamespace):
             info3 = fonts.small_ariel.render("Цена: " + str(gamespace.price), True, colors.white)
         else:
             info3 = fonts.small_ariel.render("Наем: " + str(gamespace.rent[gamespace.houses]), True, colors.white)
+        print(gamespace.mortgaged)
+        if gamespace.mortgaged:
+            info4 = fonts.ariel.render("ИПОТЕКИРАН", True, colors.white)
         screen.blit(info1, (630, 450))
         screen.blit(info2, (630, 490))
         screen.blit(info3, (630, 530))
+        screen.blit(info4, (630, 600))
+
 
 
 # Функция за изобразване за по-чист код и за да не се меша кода
@@ -256,6 +257,9 @@ def graphics(gamestart, player_list, rolled):
     if buying:
         buttons.buy_button.show_button(screen, colors.black, fonts.smaller_calibri)
         buttons.auction_button.show_button(screen, colors.black, fonts.smaller_calibri)
+    # if rolled and bought:
+    #     buttons.mortgage_button.show_button(screen, colors.black, fonts.smaller_calibri)
+
     # Проверява дали играта е почнала или сме в менюто
     if not gamestart:
         buttons.two_players_button.show_button(screen, colors.black, fonts.calibri)
@@ -281,6 +285,9 @@ def graphics(gamestart, player_list, rolled):
             buttons.dice_button.show_button(screen, colors.black, fonts.smaller_calibri)
         if rolled and not buying and not building:
             buttons.end_turn_button.show_button(screen, colors.black, fonts.calibri)
+        if rolled and player_list[current_player].owns:
+            buttons.mortgage_button.show_button(screen, colors.black, fonts.smaller_calibri)
+
 
     # pygame.draw.circle(screen, colors.red, (75, 740), 2)
     # Използва се за намиране на кооринати
@@ -435,6 +442,13 @@ def run():
                             if buttons.stop_build_button.is_hovering(mouse_pos):
                                 building = False
 
+                    if players[current_player].owns:
+                        for gamespace in players[current_player].owning:
+                            if gamespace.is_hovering(mouse_pos) and not gamespace.houses:
+                                if event.type == pygame.MOUSEBUTTONDOWN and not gamespace.mortgaged:
+                                    gamespace.mortgaged = True
+                                    players[current_player].money += gamespace.price/2
+
                     if buying and not players[current_player].is_in_jail:
                         if event.type == pygame.MOUSEBUTTONDOWN:
                             if buttons.buy_button.is_hovering(mouse_pos):
@@ -483,10 +497,18 @@ def run():
                                     if event.type == pygame.MOUSEBUTTONDOWN:
                                         players[current_player].money -= i.house_price
                                         i.houses += 1
-                                        
+
                         if event.type == pygame.MOUSEBUTTONDOWN:
                             if buttons.stop_build_button.is_hovering(mouse_pos):
                                 building = False
+
+                    if players[current_player].owns:
+                        for gamespace in players[current_player].owning:
+                            if gamespace.is_hovering(mouse_pos) and not gamespace.houses:
+                                if event.type == pygame.MOUSEBUTTONDOWN and not gamespace.mortgaged:
+                                    gamespace.mortgaged = True
+                                    players[current_player].money += gamespace.price/2
+                        
 
                     if buying and not players[current_player].is_in_jail:
                         if event.type == pygame.MOUSEBUTTONDOWN:
@@ -501,10 +523,10 @@ def run():
                     # Използва се за свършване на хода, налага се, защото в
                     # момента бутона се рефрешва при задържане на мишката. Ще бъде оправено по-късно
                     # Това не е функционален проблем, а по скоро графичен,
-                    # придобавяне на имоти ще има действия които се изпълняват между хвърления
+                    # при добавяне на имоти ще има действия които се изпълняват между хвърления
                     # Което ще оправи порблема
-                    # gamespace_check(players[current_player].stepped_on, players[current_player])
-                    # player_check(players[current_player], event, throws)
+                    gamespace_check(players[current_player].stepped_on, players[current_player])
+                    player_check(players[current_player], event, throws)
                     if players[current_player].loser:
                         players.remove(players[current_player])
                         if len(players) == 1:
@@ -514,5 +536,6 @@ def run():
                         if buttons.end_turn_button.is_hovering(mouse_pos):
                             current_player += 1
                             rolled = False
+
 
             buttons.mouse_hovering(event, mouse_pos)
