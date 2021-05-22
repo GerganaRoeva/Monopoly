@@ -29,6 +29,8 @@ audio_on = True
 checked = False
 buying = False
 building = False
+restoring = False
+mortgaging = False
 
 
 class Player:
@@ -41,7 +43,6 @@ class Player:
         self.loser = False
         self.owning = []
         self.monopolist = False
-        self.owns = False
 
 
 def is_monopolist(player, group):
@@ -92,8 +93,6 @@ def player_check(player, event, throws):
                 player.money -= 50
                 player.is_in_jail = False
 
-    if player.owning:
-        player.owns = True
 
     went_bankrupt(player)
 
@@ -213,7 +212,7 @@ def property_info(gamespace):
             info3 = fonts.small_ariel.render("Цена: " + str(gamespace.price), True, colors.white)
         else:
             info3 = fonts.small_ariel.render("Наем: " + str(gamespace.rent[gamespace.houses]), True, colors.white)
-        print(gamespace.mortgaged)
+        # print(gamespace.mortgaged)
         if gamespace.mortgaged:
             info4 = fonts.ariel.render("ИПОТЕКИРАН", True, colors.white)
         screen.blit(info1, (630, 450))
@@ -285,8 +284,20 @@ def graphics(gamestart, player_list, rolled):
             buttons.dice_button.show_button(screen, colors.black, fonts.smaller_calibri)
         if rolled and not buying and not building:
             buttons.end_turn_button.show_button(screen, colors.black, fonts.calibri)
-        if rolled and player_list[current_player].owns:
+
+        can_mortgage = False
+        for space in player_list[current_player].owning:
+            if not space.mortgaged:
+                can_mortgage = True
+        if rolled and can_mortgage and not mortgaging:
             buttons.mortgage_button.show_button(screen, colors.black, fonts.smaller_calibri)
+
+        can_restor = False
+        for space in player_list[current_player].owning:
+            if space.mortgaged:
+                can_restor = True
+        if can_restor and rolled and not restoring:
+            buttons.restor_button.show_button(screen, colors.black, fonts.smaller_calibri)
 
 
     # pygame.draw.circle(screen, colors.red, (75, 740), 2)
@@ -346,6 +357,8 @@ def run():
     global audio_on
     throws = 0
     current_music = 0
+    restoring = False
+    mortgaging = False
     # losers = []
     audio.themes[current_music].play(-1)
 
@@ -430,6 +443,14 @@ def run():
                             if buttons.build_button.is_hovering(mouse_pos):
                                 building = True
 
+                    if event.type == pygame.MOUSEBUTTONDOWN and buttons.restor_button.is_hovering(mouse_pos):
+                        # print("cuknat")
+                        restoring = True
+
+                    if event.type == pygame.MOUSEBUTTONDOWN:
+                        if buttons.mortgage_button.is_hovering(mouse_pos):
+                            mortgaging = True
+
                     if building and not buying:
                         for i in gamespaces.spaces:
                             if (i.type == "Property" and (i in choose_build(players[current_player], event)) and i.can_build and i.houses < 5):
@@ -442,12 +463,23 @@ def run():
                             if buttons.stop_build_button.is_hovering(mouse_pos):
                                 building = False
 
-                    if players[current_player].owns:
+                    if players[current_player].owning and mortgaging:
                         for gamespace in players[current_player].owning:
-                            if gamespace.is_hovering(mouse_pos) and not gamespace.houses:
+                            if gamespace.is_hovering(mouse_pos) and not gamespace.houses :
                                 if event.type == pygame.MOUSEBUTTONDOWN and not gamespace.mortgaged:
                                     gamespace.mortgaged = True
                                     players[current_player].money += gamespace.price/2
+                                    mortgaging = False
+
+                    
+
+                    if players[current_player].owning and restoring:
+                        for gamespace in players[current_player].owning:
+                            if gamespace.is_hovering(mouse_pos) and gamespace.mortgaged:
+                                if event.type == pygame.MOUSEBUTTONDOWN:
+                                    gamespace.mortgaged = False
+                                    players[current_player].money -= (gamespace.price/2 + (gamespace.price/2)*10/100)
+                                    restoring = False
 
                     if buying and not players[current_player].is_in_jail:
                         if event.type == pygame.MOUSEBUTTONDOWN:
@@ -486,10 +518,24 @@ def run():
                                 player_check(players[current_player], event, throws)
                                 players[current_player].jail_counter = 0
                 else:
+                    # print(restoring)
+
+                    # for gamespace in players[current_player].owning:
+                    #     print(gamespace.mortgaged)
+
+                    if event.type == pygame.MOUSEBUTTONDOWN and buttons.restor_button.is_hovering(mouse_pos):
+                        # print("cuknat")
+                        restoring = True
+                    
+                    if event.type == pygame.MOUSEBUTTONDOWN:
+                        if buttons.mortgage_button.is_hovering(mouse_pos):
+                            mortgaging = True
+                            
                     if players[current_player].monopolist and not building and not buying:
                         if event.type == pygame.MOUSEBUTTONDOWN:
                             if buttons.build_button.is_hovering(mouse_pos):
                                 building = True
+
                     if building and not buying:
                         for i in gamespaces.spaces:
                             if (i.type == "Property" and (i in choose_build(players[current_player], event)) and i.can_build and i.houses < 5):
@@ -502,13 +548,23 @@ def run():
                             if buttons.stop_build_button.is_hovering(mouse_pos):
                                 building = False
 
-                    if players[current_player].owns:
+                    if players[current_player].owning and mortgaging:
                         for gamespace in players[current_player].owning:
                             if gamespace.is_hovering(mouse_pos) and not gamespace.houses:
                                 if event.type == pygame.MOUSEBUTTONDOWN and not gamespace.mortgaged:
                                     gamespace.mortgaged = True
+                                    # print(gamespace.mortgaged)
                                     players[current_player].money += gamespace.price/2
-                        
+                                    mortgaging = False
+                    
+                    if players[current_player].owning and restoring:
+                        for gamespace in players[current_player].owning:
+                            if gamespace.is_hovering(mouse_pos) and gamespace.mortgaged:
+                                if event.type == pygame.MOUSEBUTTONDOWN:
+                                    # print(gamespace.mortgaged)
+                                    gamespace.mortgaged = False    
+                                    players[current_player].money -= (gamespace.price/2 + (gamespace.price/2)*10/100)
+                                    restoring = False 
 
                     if buying and not players[current_player].is_in_jail:
                         if event.type == pygame.MOUSEBUTTONDOWN:
