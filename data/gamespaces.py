@@ -22,6 +22,7 @@ class Property(GameSpace):
         self.rent = 0
         self.name = name
         self.can_build = False
+        self.can_sell = False
         self.mortgaged = False
         self.hitbox = pygame.Rect(x, y, 0, 0)
         if group == "brown":

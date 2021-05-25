@@ -51,6 +51,7 @@ build_button = Button(colors.gray, colors.black, 420, 580, 150, 50, 'Build')
 stop_build_button = Button(colors.gray, colors.black, 420, 680, 150, 50, 'Stop')
 mortgage_button = Button(colors.gray, colors.black, 320, 610, 150, 50, 'Mortgage')
 restor_button = Button(colors.gray, colors.black, 520, 610, 150, 50, 'Restor')
+sell_button = Button(colors.gray, colors.black, 415, 740, 150, 50, 'Sell')
 
 
 # Функция за промяна на цвета на всички бутони
@@ -144,3 +145,9 @@ def mouse_hovering(event, pos):
             restor_button.color = colors.dark_gray
         else:
             restor_button.color = colors.gray
+
+    if event.type == pygame.MOUSEMOTION:
+        if sell_button.is_hovering(pos):
+            sell_button.color = colors.dark_gray
+        else:
+            sell_button.color = colors.gray
