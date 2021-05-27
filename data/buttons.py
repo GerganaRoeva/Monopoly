@@ -47,8 +47,13 @@ audio_button = Button(colors.gray, colors.black, 150, 200, 120, 60, 'Audio ON/OF
 theme_button = Button(colors.gray, colors.black, 740, 150, 120, 60, 'Change Music')
 buy_button = Button(colors.gray, colors.black, 320, 680, 150, 50, 'Buy')
 auction_button = Button(colors.gray, colors.black, 520, 680, 150, 50, 'Auction')
-build_button = Button(colors.gray, colors.black, 420, 680, 150, 50, 'Build')
+build_button = Button(colors.gray, colors.black, 420, 580, 150, 50, 'Build')
 stop_build_button = Button(colors.gray, colors.black, 420, 680, 150, 50, 'Stop')
+mortgage_button = Button(colors.gray, colors.black, 320, 610, 150, 50, 'Mortgage')
+restore_button = Button(colors.gray, colors.black, 520, 610, 150, 50, 'Restore')
+sell_button = Button(colors.gray, colors.black, 415, 740, 150, 50, 'Sell')
+confirm_yes_button = Button(colors.gray, colors.black, 300, 450, 150, 75, 'YES')
+confirm_no_button = Button(colors.gray, colors.black, 600, 450, 150, 75, 'NO')
 
 
 # Функция за промяна на цвета на всички бутони
@@ -130,3 +135,36 @@ def mouse_hovering(event, pos):
             stop_build_button.color = colors.dark_gray
         else:
             stop_build_button.color = colors.gray
+
+    if event.type == pygame.MOUSEMOTION:
+        if mortgage_button.is_hovering(pos):
+            mortgage_button.color = colors.dark_gray
+        else:
+            mortgage_button.color = colors.gray
+
+    if event.type == pygame.MOUSEMOTION:
+        if restore_button.is_hovering(pos):
+            restore_button.color = colors.dark_gray
+        else:
+            restore_button.color = colors.gray
+
+    if event.type == pygame.MOUSEMOTION:
+        if sell_button.is_hovering(pos):
+            sell_button.color = colors.dark_gray
+        else:
+            sell_button.color = colors.gray
+
+    if event.type == pygame.MOUSEMOTION:
+        if confirm_no_button.is_hovering(pos):
+            confirm_no_button.color = colors.dark_gray
+        else:
+            confirm_no_button.color = colors.gray
+
+    if event.type == pygame.MOUSEMOTION:
+        if confirm_yes_button.is_hovering(pos):
+            confirm_yes_button.color = colors.dark_gray
+        else:
+            confirm_yes_button.color = colors.gray
+
+
+

@@ -2,7 +2,7 @@ import os
 import importlib
 import random
 import pygame
-# Направих ги на отделни файлове, защото е грозно
+
 from data import buttons
 from data import gamespaces
 from data import audio
@@ -11,19 +11,16 @@ from data import fonts
 
 pygame.init()
 
-# За да може да ги сменяме и използваме по-лесно и да не е нужно да
-# ги повтаряме по късно
 winHeight = 1000
 winWidth = 1000
 
 screen = pygame.display.set_mode((winWidth, winHeight))
 pygame.display.set_caption("Monopoly")
 
-# Прекръстих го на поле да няма обърквания.
 board = pygame.image.load(os.path.join('data', 'Assets', 'board.png'))
 board = pygame.transform.scale(board, (1000, 1000))
 
-# не са във функцията, защото искам да са статик
+# не са във функцията, за да са статик
 current_player = 0
 dice = [0, 0]
 players = list()
@@ -32,9 +29,14 @@ audio_on = True
 checked = False
 buying = False
 building = False
+restoring = False
+mortgaging = False
+selling = False
+drawn_card = 0
+chance = False
+quitting = False
 
 
-# Клас за играч, по-късно ще будат добавени още неща като списък с имоти
 class Player:
     def __init__(self, id, money=2000, stepped_on=gamespaces.go):
         self.id = id
@@ -48,22 +50,24 @@ class Player:
 
 
 def is_monopolist(player, group):
-    need = 3
     duplicates = []
 
     for space in player.owning:
         if space.group == "brown" or space.group == "purple":
             need = 2
+        else:
+            need = 3
 
         for another_space in player.owning:
-            if space.group == another_space.group and space.group == group:
+            if space.group == another_space.group and space.group == group and space is not another_space:
                 duplicates.append(another_space)
 
-            if len(duplicates) == need:
-                for i in duplicates:
-                    i.can_build = True
-                player.monopolist = True
-                return True
+                if len(duplicates) == need:
+                    for i in duplicates:
+                        i.can_build = True
+                    player.monopolist = True
+                    duplicates.clear()
+                    return True
 
     return False
 
@@ -100,6 +104,10 @@ def player_check(player, event, throws):
 def gamespace_check(gamespace, player):
     global checked
     global buying
+    global drawn_card
+    global players
+    global chance
+
     if gamespace.id == 30 or gamespace == gamespaces.go_to_jail:
         player.stepped_on = gamespaces.jail
         player.is_in_jail = True
@@ -113,8 +121,72 @@ def gamespace_check(gamespace, player):
             if not gamespace.owned_by:
                 buying = True
             else:
-                player.money -= gamespace.rent[gamespace.houses]
-                gamespace.owned_by.money += gamespace.rent[gamespace.houses]
+                if not gamespace.mortgaged:
+                    player.money -= gamespace.rent[gamespace.houses]
+                    gamespace.owned_by.money += gamespace.rent[gamespace.houses]
+        elif gamespace.type == "Chest" or gamespace.type == "Chance":
+            if gamespace.type == "Chance":
+                chance = True
+            drawn_card = random.randint(1, 16)
+            if gamespace.cards[drawn_card - 1].effect == 1:
+                player.stepped_on = gamespaces.go
+                player.money += 200
+            elif gamespace.cards[drawn_card - 1].effect == 2:
+                player.money += 200
+            elif gamespace.cards[drawn_card - 1].effect == 3:
+                player.money -= 50
+            elif gamespace.cards[drawn_card - 1].effect == 4:
+                player.money += 50
+            elif gamespace.cards[drawn_card - 1].effect == 5:
+                player.is_in_jail = True
+            elif gamespace.cards[drawn_card - 1].effect == 6:
+                for i in players:
+                    i.money -= 50
+                    player.money += 50
+            elif gamespace.cards[drawn_card - 1].effect == 7:
+                player.money += 100
+            elif gamespace.cards[drawn_card - 1].effect == 8:
+                player.money += 20
+            elif gamespace.cards[drawn_card - 1].effect == 9:
+                for i in players:
+                    i.money -= 10
+                    player.money += 10
+            elif gamespace.cards[drawn_card - 1].effect == 10:
+                player.money += 150
+            elif gamespace.cards[drawn_card - 1].effect == 11:
+                player.money += 25
+            elif gamespace.cards[drawn_card - 1].effect == 12:
+                player.money += 10
+            elif gamespace.cards[drawn_card - 1].effect == 13:
+                for i in player.owning:
+                    if i.houses == 1:
+                        player.money -= 40
+                    elif i.houses == 2:
+                        player.money -= 80
+                    elif i.houses == 3:
+                        player.money -= 120
+                    elif i.houses == 4:
+                        player.money -= 160
+                    elif i.houses == 5:
+                        player.money -= 115
+            elif gamespace.cards[drawn_card - 1].effect == 14:
+                if gamespace.id > 24:
+                    player.money += 200
+                player.stepped_on = gamespaces.red3
+            elif gamespace.cards[drawn_card - 1].effect == 15:
+                if gamespace.id > 14:
+                    player.money += 200
+                player.stepped_on = gamespaces.pink3
+            elif gamespace.cards[drawn_card - 1].effect == 16:
+                player.stepped_on = gamespaces.spaces[gamespace.id - 3]
+            elif gamespace.cards[drawn_card - 1].effect == 17:
+                player.money -= 15
+            elif gamespace.cards[drawn_card - 1].effect == 18:
+                player.stepped_on = gamespaces.purple2
+            elif gamespace.cards[drawn_card - 1].effect == 19:
+                player.money += 200
+                player.stepped_on = gamespaces.brown1
+
     checked = True
 
 
@@ -140,38 +212,9 @@ def draw_player(player):
         pass
 
 
-def build(gamespace):
-    rotate_angle = 0
-    if gamespace.group == "pink" or gamespace.group == "orange":
-        rotate_angle = 90
-    if gamespace.group == "red" or gamespace.group == "yellow":
-        rotate_angle = 180
-    if gamespace.group == "green" or gamespace.group == "purple":
-        rotate_angle = 270
-
-    house = pygame.image.load(os.path.join('data', 'Assets', 'house.png'))
-    house = pygame.transform.scale(house, (58, 77))
-
-    house = pygame.transform.rotate(house, rotate_angle)
-    #         # new_rect = rotated_image.get_rect(center = image.get_rect(topleft = topleft).center)
-
-    screen.blit(house, (170, 700))
-
-    # for color in player.all_from_group:
-    #     print(color)
-
-    # house = pygame.image.load(os.path.join('data', 'Assets', 'house.png'))
-    # house = pygame.transform.scale(house, (58, 77))
-    # # house = pygame.transform.rotate(house, rotate_angle)
-    # # new_rect = rotated_image.get_rect(center = image.get_rect(topleft = topleft).center)
-    # screen.blit(house, (170, 700))
-    # pygame.display.update()
-
-
-def choose_build(player, event):
+def choose_build(player):
     can_build = []
     from_one_color = []
-    houses_in_group = 0
     groups = ['blue', 'brown', 'pink', 'orange', 'red', 'yellow', 'green', 'purple']
 
     for group in groups:
@@ -192,6 +235,43 @@ def choose_build(player, event):
     return can_build
 
 
+def choose_sell(player):
+    can_sell = []
+    from_one_color = []
+    # count_houses = []
+
+    for space in player.owning:
+        if space.houses > 0:
+            for i in range(len(player.owning)):
+                if player.owning[i].group == space.group:
+                    from_one_color.append(player.owning[i])
+
+            if len(from_one_color) == 2:
+                if from_one_color[0].houses == from_one_color[1].houses:
+                    can_sell.append(from_one_color[0])
+                    can_sell.append(from_one_color[1])
+                if from_one_color[0].houses > from_one_color[1].houses:
+                    can_sell.append(from_one_color[0])
+                else:
+                    can_sell.append(from_one_color[1])
+
+            if len(from_one_color) == 3:
+                if from_one_color[0].houses > from_one_color[1].houses or from_one_color[0].houses > from_one_color[2].houses:
+                    can_sell.append(from_one_color[0])
+                if from_one_color[1].houses > from_one_color[0].houses or from_one_color[1].houses > from_one_color[2].houses:
+                    can_sell.append(from_one_color[1])
+                if from_one_color[2].houses > from_one_color[0].houses or from_one_color[2].houses > from_one_color[1].houses:
+                    can_sell.append(from_one_color[2])
+                if from_one_color[0].houses == from_one_color[1].houses and from_one_color[2].houses == from_one_color[1].houses:
+                    can_sell.append(from_one_color[0])
+                    can_sell.append(from_one_color[1])
+                    can_sell.append(from_one_color[2])
+
+        from_one_color.clear()
+
+    return can_sell
+
+
 def turn_displayer(player):
     global building
     colour = colors.black
@@ -204,11 +284,11 @@ def turn_displayer(player):
     elif player.id == 4:
         colour = colors.dark_green
     moneytxt = fonts.calibri.render('Money: ' + str(player.money), True, colour)
-    screen.blit(moneytxt, (175, 740))
+    screen.blit(moneytxt, (175, 800))
     playertxt = fonts.calibri.render('Player: ' + str(player.id), True, colour)
-    screen.blit(playertxt, (425, 740))
-    montxt = fonts.calibri.render('Build: ' + str(building), True, colour)
-    screen.blit(montxt, (650, 740))
+    screen.blit(playertxt, (425, 800))
+    # montxt = fonts.calibri.render('Build: ' + str(building), True, colour)
+    # screen.blit(montxt, (650, 740))
     pass
 
 
@@ -217,6 +297,7 @@ def property_info(gamespace):
     if gamespace.is_hovering(mouse_pos):
         info_bg = pygame.image.load(os.path.join('data', 'Assets', 'info_bg.png'))
         info_bg = pygame.transform.scale(info_bg, (230, 400))
+        info4 = fonts.ariel.render("", True, colors.white)
         screen.blit(info_bg, (620, 440))
         owner = "никой"
         if gamespace.owned_by:
@@ -235,22 +316,50 @@ def property_info(gamespace):
             info3 = fonts.small_ariel.render("Цена: " + str(gamespace.price), True, colors.white)
         else:
             info3 = fonts.small_ariel.render("Наем: " + str(gamespace.rent[gamespace.houses]), True, colors.white)
+        if gamespace.mortgaged:
+            info4 = fonts.small_ariel.render("ИПОТЕКИРАН", True, colors.white)
         screen.blit(info1, (630, 450))
         screen.blit(info2, (630, 490))
         screen.blit(info3, (630, 530))
+        screen.blit(info4, (630, 600))
+
+
+def show_card(card):
+    card_bg = pygame.image.load(os.path.join('data', 'Assets', 'card_bg.png'))
+    card_bg = pygame.transform.scale(card_bg, (600, 300))
+    effect_txt = fonts.big_ariel.render(card.text, True, colors.black)
+    screen.blit(card_bg, (200, 350))
+    screen.blit(effect_txt, (230, 450))
+    pygame.time.wait(5000)
 
 
 # Функция за изобразване за по-чист код и за да не се меша кода
 def graphics(gamestart, player_list, rolled):
     global buying
+    global drawn_card
+    global chance
+    global quitting
     screen.fill(colors.white)
 
     # Dice roll и Money за момента се използват за дебъгване, по-късно
     # ще има различен, по-добър дисплей
 
     screen.blit(board, (0, 0))
+
+    # show_card(gamespaces.card1)
+
+    if drawn_card:
+        # print("hree")
+        if chance:
+            show_card(gamespaces.chance_cards[drawn_card - 1])
+        else:
+            show_card(gamespaces.chance_cards[drawn_card - 1])
+        drawn_card = 0
+        chance = False
+
     if gamestart:
         turn_displayer(player_list[current_player])
+
 
     # Изобразяване на зарчета
     if dice[0]:
@@ -274,6 +383,9 @@ def graphics(gamestart, player_list, rolled):
     if buying:
         buttons.buy_button.show_button(screen, colors.black, fonts.smaller_calibri)
         buttons.auction_button.show_button(screen, colors.black, fonts.smaller_calibri)
+    # if rolled and bought:
+    #     buttons.mortgage_button.show_button(screen, colors.black, fonts.smaller_calibri)
+
     # Проверява дали играта е почнала или сме в менюто
     if not gamestart:
         buttons.two_players_button.show_button(screen, colors.black, fonts.calibri)
@@ -290,7 +402,7 @@ def graphics(gamestart, player_list, rolled):
         # Проверява дали играче е в затвора
         if player_list[current_player].is_in_jail:
             buttons.pay_jail_button.show_button(screen, colors.black, fonts.calibri)
-        if not buying and player_list[current_player].monopolist and not building:
+        if (not buying) and player_list[current_player].monopolist and (not building):
             buttons.build_button.show_button(screen, colors.black, fonts.calibri)
         if building:
             buttons.stop_build_button.show_button(screen, colors.black, fonts.calibri)
@@ -300,8 +412,38 @@ def graphics(gamestart, player_list, rolled):
         if rolled and not buying and not building:
             buttons.end_turn_button.show_button(screen, colors.black, fonts.calibri)
 
+        can_mortgage = False
+        for space in player_list[current_player].owning:
+            if not space.mortgaged and space.houses == 0:
+                can_mortgage = True
+        if rolled and can_mortgage and not mortgaging:
+            buttons.mortgage_button.show_button(screen, colors.black, fonts.smaller_calibri)
+
+        can_restore = False
+        for space in player_list[current_player].owning:
+            if space.mortgaged:
+                can_restore = True
+        if can_restore and rolled and not restoring:
+            buttons.restore_button.show_button(screen, colors.black, fonts.smaller_calibri)
+
+        can_sell = False
+        for space in player_list[current_player].owning:
+            if space.houses:
+                can_sell = True
+        if can_sell and rolled and not building:
+            buttons.sell_button.show_button(screen, colors.black, fonts.smaller_calibri)
+
     # pygame.draw.circle(screen, colors.red, (75, 740), 2)
     # Използва се за намиране на кооринати
+
+    if quitting:
+        info_bg = pygame.image.load(os.path.join('data', 'Assets', 'info_bg.png'))
+        info_bg = pygame.transform.scale(info_bg, (1500, 1500))
+        screen.blit(info_bg, (-100, -100))
+        buttons.confirm_yes_button.show_button(screen, colors.black, fonts.calibri)
+        buttons.confirm_no_button.show_button(screen, colors.black, fonts.calibri)
+        confirmation = fonts.big_calibri.render('ARE YOU SURE?', True, colors.white)
+        screen.blit(confirmation, (350, 400))
 
     pygame.display.update()
 
@@ -355,8 +497,15 @@ def run():
     global players
     global mouse_pos
     global audio_on
+    global restoring
+    global mortgaging
+    global selling
+    global quitting
     throws = 0
     current_music = 0
+    restoring = False
+    mortgaging = False
+    selling = False
     # losers = []
     audio.themes[current_music].play(-1)
 
@@ -384,7 +533,15 @@ def run():
 
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if buttons.quit_button.is_hovering(mouse_pos):
-                    running = False
+                    quitting = True
+
+            if quitting:
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    if buttons.confirm_no_button.is_hovering(mouse_pos):
+                        quitting = False
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    if buttons.confirm_yes_button.is_hovering(mouse_pos):
+                        running = False
 
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if buttons.audio_button.is_hovering(mouse_pos):
@@ -436,23 +593,60 @@ def run():
 
                 # Проверява дали зарчето е хвърлено
                 if not rolled:
-                    if players[current_player].monopolist and not building:
+                    if players[current_player].monopolist and not building and not buying:
                         if event.type == pygame.MOUSEBUTTONDOWN:
                             if buttons.build_button.is_hovering(mouse_pos):
                                 building = True
 
-                    if building:
+                    if event.type == pygame.MOUSEBUTTONDOWN and buttons.restore_button.is_hovering(mouse_pos):
+                        restoring = True
+
+                    if event.type == pygame.MOUSEBUTTONDOWN and buttons.sell_button.is_hovering(mouse_pos):
+                        selling = True
+
+                    if event.type == pygame.MOUSEBUTTONDOWN:
+                        if buttons.mortgage_button.is_hovering(mouse_pos):
+                            mortgaging = True
+
+                    if building and not buying:
                         for i in gamespaces.spaces:
-                            if i.type == "Property" and i in choose_build(players[current_player], event) and i.can_build and i.houses < 5:
+                            if (i.type == "Property" and (
+                                    i in choose_build(players[current_player])) and i.can_build and i.houses < 5):
                                 if i.is_hovering(mouse_pos):
                                     if event.type == pygame.MOUSEBUTTONDOWN:
                                         players[current_player].money -= i.house_price
                                         i.houses += 1
+
                         if event.type == pygame.MOUSEBUTTONDOWN:
                             if buttons.stop_build_button.is_hovering(mouse_pos):
                                 building = False
 
-                    if buying:
+                    if players[current_player].owning and mortgaging:
+                        for gamespace in players[current_player].owning:
+                            if gamespace.is_hovering(mouse_pos) and not gamespace.houses:
+                                if event.type == pygame.MOUSEBUTTONDOWN and not gamespace.mortgaged:
+                                    gamespace.mortgaged = True
+                                    players[current_player].money += gamespace.price / 2
+                                    mortgaging = False
+                    if selling:
+                        for space in players[current_player].owning:
+                            if space.is_hovering(mouse_pos):
+                                if event.type == pygame.MOUSEBUTTONDOWN:
+                                    if space in choose_sell(players[current_player]):
+                                        space.houses -= 1
+                                        players[current_player].money += space.house_price / 2
+                                        selling = False
+
+                    if players[current_player].owning and restoring:
+                        for gamespace in players[current_player].owning:
+                            if gamespace.is_hovering(mouse_pos) and gamespace.mortgaged:
+                                if event.type == pygame.MOUSEBUTTONDOWN:
+                                    gamespace.mortgaged = False
+                                    players[current_player].money -= (
+                                                gamespace.price / 2 + (gamespace.price / 2) * 10 / 100)
+                                    restoring = False
+
+                    if buying and not players[current_player].is_in_jail:
                         if event.type == pygame.MOUSEBUTTONDOWN:
                             if buttons.buy_button.is_hovering(mouse_pos):
                                 players[current_player].stepped_on.owned_by = players[current_player]
@@ -466,8 +660,8 @@ def run():
                     if event.type == pygame.MOUSEBUTTONDOWN:
                         if buttons.dice_button.is_hovering(mouse_pos):
                             rolled = True
-                            # dice[0] = random.randint(1, 6)
-                            # dice[1] = random.randint(1, 6)
+                            dice[0] = random.randint(1, 6)
+                            dice[1] = random.randint(1, 6)
                             dice[0] = 0
                             dice[1] = 1
                             # При чифт
@@ -489,23 +683,61 @@ def run():
                                 player_check(players[current_player], event, throws)
                                 players[current_player].jail_counter = 0
                 else:
-                    if players[current_player].monopolist and not building:
+
+                    if event.type == pygame.MOUSEBUTTONDOWN and buttons.restore_button.is_hovering(mouse_pos):
+                        restoring = True
+
+                    if event.type == pygame.MOUSEBUTTONDOWN and buttons.sell_button.is_hovering(mouse_pos):
+                        selling = True
+
+                    if event.type == pygame.MOUSEBUTTONDOWN:
+                        if buttons.mortgage_button.is_hovering(mouse_pos):
+                            mortgaging = True
+
+                    if players[current_player].monopolist and not building and not buying:
                         if event.type == pygame.MOUSEBUTTONDOWN:
                             if buttons.build_button.is_hovering(mouse_pos):
                                 building = True
 
-                    if building:
+                    if building and not buying:
                         for i in gamespaces.spaces:
-                            if i.type == "Property" and i in choose_build(players[current_player], event) and i.can_build and i.houses < 5:
+                            if (i.type == "Property" and (
+                                    i in choose_build(players[current_player])) and i.can_build and i.houses < 5):
                                 if i.is_hovering(mouse_pos):
                                     if event.type == pygame.MOUSEBUTTONDOWN:
                                         players[current_player].money -= i.house_price
                                         i.houses += 1
+
                         if event.type == pygame.MOUSEBUTTONDOWN:
                             if buttons.stop_build_button.is_hovering(mouse_pos):
                                 building = False
+                    if selling:
+                        for space in players[current_player].owning:
+                            if space.is_hovering(mouse_pos):
+                                if event.type == pygame.MOUSEBUTTONDOWN:
+                                    if space in choose_sell(players[current_player]):
+                                        space.houses -= 1
+                                        players[current_player].money += space.house_price / 2
+                                        selling = False
 
-                    if buying:
+                    if players[current_player].owning and mortgaging:
+                        for gamespace in players[current_player].owning:
+                            if gamespace.is_hovering(mouse_pos) and not gamespace.houses:
+                                if event.type == pygame.MOUSEBUTTONDOWN and not gamespace.mortgaged:
+                                    gamespace.mortgaged = True
+                                    players[current_player].money += gamespace.price / 2
+                                    mortgaging = False
+
+                    if players[current_player].owning and restoring:
+                        for gamespace in players[current_player].owning:
+                            if gamespace.is_hovering(mouse_pos) and gamespace.mortgaged:
+                                if event.type == pygame.MOUSEBUTTONDOWN:
+                                    gamespace.mortgaged = False
+                                    players[current_player].money -= (
+                                                gamespace.price / 2 + (gamespace.price / 2) * 10 / 100)
+                                    restoring = False
+
+                    if buying and not players[current_player].is_in_jail:
                         if event.type == pygame.MOUSEBUTTONDOWN:
                             if buttons.buy_button.is_hovering(mouse_pos):
                                 players[current_player].stepped_on.owned_by = players[current_player]
@@ -518,12 +750,14 @@ def run():
                     # Използва се за свършване на хода, налага се, защото в
                     # момента бутона се рефрешва при задържане на мишката. Ще бъде оправено по-късно
                     # Това не е функционален проблем, а по скоро графичен,
-                    # придобавяне на имоти ще има действия които се изпълняват между хвърления
+                    # при добавяне на имоти ще има действия които се изпълняват между хвърления
                     # Което ще оправи порблема
-                    # gamespace_check(players[current_player].stepped_on, players[current_player])
-                    # player_check(players[current_player], event, throws)
+                    gamespace_check(players[current_player].stepped_on, players[current_player])
+                    player_check(players[current_player], event, throws)
                     if players[current_player].loser:
                         players.remove(players[current_player])
+                        if len(players) == 1:
+                            running = False
 
                     if event.type == pygame.MOUSEBUTTONDOWN:
                         if buttons.end_turn_button.is_hovering(mouse_pos):
