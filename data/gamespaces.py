@@ -149,7 +149,46 @@ class Property(GameSpace):
 
 
 class Station(GameSpace):
-    pass
+    def __init__(self, id, x, y):
+        GameSpace.__init__(self, id, x, y, "Station")
+        self.owned_by = None
+        self.price = 200
+        self.mortgaged = False
+        self.hitbox = pygame.Rect(x, y, 0, 0)
+    
+    def get_rent(self, owned):
+        if owned == 1:
+            return 25
+        elif owned == 2:
+            return 50
+        elif owned == 3:
+            return 100
+        elif owned == 4:
+            return 200
+
+    def is_hovering(self, pos):
+        if self.hitbox.collidepoint(pos):
+            return True
+        else:
+            return False
+
+
+class Special(GameSpace):
+    def __init__(self, id, x, y):
+        GameSpace.__init__(self, id, x, y, "Special")
+        self.owned_by = None
+        self.price = 150
+        self.mortgaged = False
+        self.hitbox = pygame.Rect(x, y, 0, 0)
+
+    def get_rent(self, owned):
+        return owned * 20
+
+    def is_hovering(self, pos):
+        if self.hitbox.collidepoint(pos):
+            return True
+        else:
+            return False
 
 
 class Chance(GameSpace):
@@ -208,7 +247,6 @@ chance_cards[3] = card18
 card19 = Card("Ограбваш пияница. Вземи 50!", 4)
 chance_cards[4] = card19
 card20 = Card("Върни се с 3 места назад!", 16)
-chance_cards[5] = card20
 chance_cards[15] = card20
 chance_cards[14] = card20
 card21 = Card("Минувач те пребива нощем и те обира.\nЗагуби 15!", 17)
@@ -225,6 +263,8 @@ card26 = Card("Продължи до Люлин 5", 19)
 chance_cards[12] = card26
 card27 = Card("Скамнаха те в наргиле бар! Загуби 50!", 3)
 chance_cards[13] = card27
+card28 = Card("Излез от затвора безплатно", 20)
+chance_cards[5] = card28
 
 
 # Всички полета:
@@ -239,7 +279,7 @@ brown2 = Property(3, 660, 925, "brown", "Дружба 1", 1)
 spaces[3] = brown2
 tax1 = GameSpace(4, 580, 925)
 spaces[4] = tax1
-station1 = GameSpace(5, 500, 925)
+station1 = Station(5, 500, 925)
 spaces[5] = station1
 blue1 = Property(6, 420, 925, "blue", "Надежда 2")
 spaces[6] = blue1
@@ -253,13 +293,13 @@ jail = GameSpace(10, 75, 925)
 spaces[10] = jail
 pink1 = Property(11, 75, 825, "pink", "Подуене")
 spaces[11] = pink1
-elec = GameSpace(12, 75, 740)
+elec = Special(12, 75, 740)
 spaces[12] = elec
 pink2 = Property(13, 75, 660, "pink", "Овча Купел")
 spaces[13] = pink2
 pink3 = Property(14, 75, 580, "pink", "Студентски Град", 1)
 spaces[14] = pink3
-station2 = GameSpace(15, 75, 500)
+station2 = Station(15, 75, 500)
 spaces[15] = station2
 orange1 = Property(16, 75, 420, "orange", "Гоце Делчев")
 spaces[16] = orange1
@@ -279,13 +319,13 @@ red2 = Property(23, 340, 75, "red", "Красно Село")
 spaces[23] = red2
 red3 = Property(24, 420, 75, "red", "Редута", 1)
 spaces[24] = red3
-station3 = GameSpace(25, 500, 75)
+station3 = Station(25, 500, 75)
 spaces[25] = station3
 yellow1 = Property(26, 580, 75, "yellow", "Гео Милев")
 spaces[26] = yellow1
 yellow2 = Property(27, 660, 75, "yellow", "Горна Баня")
 spaces[27] = yellow2
-water = GameSpace(28, 740, 75)
+water = Special(28, 740, 75)
 spaces[28] = water
 yellow3 = Property(29, 825, 75, "yellow", "Център", 1)
 spaces[29] = yellow3
@@ -299,7 +339,7 @@ cchest3 = Chance(33, 925, 340, chest_cards, "Chest")
 spaces[33] = cchest3
 green3 = Property(34, 925, 420, "green", "Изток", 1)
 spaces[34] = green3
-station4 = GameSpace(35, 925, 500)
+station4 = Station(35, 925, 500)
 spaces[35] = station4
 chance3 = Chance(36, 925, 580, chance_cards, "Chance")
 spaces[36] = chance3

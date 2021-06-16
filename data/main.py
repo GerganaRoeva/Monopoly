@@ -47,27 +47,29 @@ class Player:
         self.loser = False
         self.owning = []
         self.monopolist = False
+        self.free_escape = False
 
 
 def is_monopolist(player, group):
     duplicates = []
 
     for space in player.owning:
-        if space.group == "brown" or space.group == "purple":
-            need = 2
-        else:
-            need = 3
+        if space.type == "Property":
+            if space.group == "brown" or space.group == "purple":
+                need = 2
+            else:
+                need = 3
 
-        for another_space in player.owning:
-            if space.group == another_space.group and space.group == group and space is not another_space:
-                duplicates.append(another_space)
+            for another_space in player.owning:
+                if space.group == another_space.group and space.group == group and space is not another_space:
+                    duplicates.append(another_space)
 
-                if len(duplicates) == need:
-                    for i in duplicates:
-                        i.can_build = True
-                    player.monopolist = True
-                    duplicates.clear()
-                    return True
+                    if len(duplicates) == need:
+                        for i in duplicates:
+                            i.can_build = True
+                        player.monopolist = True
+                        duplicates.clear()
+                        return True
 
     return False
 
@@ -94,6 +96,9 @@ def player_check(player, event, throws):
         if event.type == pygame.MOUSEBUTTONDOWN:
             if buttons.pay_jail_button.is_hovering(mouse_pos):
                 player.money -= 50
+                if player.free_escape:
+                    player.money += 50
+                    player.free_escape = False
                 player.is_in_jail = False
 
     went_bankrupt(player)
@@ -124,6 +129,25 @@ def gamespace_check(gamespace, player):
                 if not gamespace.mortgaged:
                     player.money -= gamespace.rent[gamespace.houses]
                     gamespace.owned_by.money += gamespace.rent[gamespace.houses]
+        elif gamespace.type == "Station":
+            if not gamespace.owned_by:
+                buying = True
+            else:
+                count = 0
+                for i in gamespace.owned_by.owning:
+                    if i.type == "Station":
+                        count += 1
+                player.money -= gamespace.get_rent(count)
+        elif gamespace.type == "Special":
+            if not gamespace.owned_by:
+                buying = True
+            else:
+                count = 0
+                for i in gamespace.owned_by.owning:
+                    if i.type == "Property":
+                        count += 1
+                player.money -= gamespace.get_rent(count)
+
         elif gamespace.type == "Chest" or gamespace.type == "Chance":
             if gamespace.type == "Chance":
                 chance = True
@@ -186,6 +210,8 @@ def gamespace_check(gamespace, player):
             elif gamespace.cards[drawn_card - 1].effect == 19:
                 player.money += 200
                 player.stepped_on = gamespaces.brown1
+            elif gamespace.cards[drawn_card - 1].effect == 20:
+                player.free_escape = True
 
     checked = True
 
@@ -345,13 +371,6 @@ def graphics(gamestart, player_list, rolled):
 
     screen.blit(board, (0, 0))
 
-    if drawn_card:
-        if chance:
-            show_card(gamespaces.chance_cards[drawn_card - 1])
-        else:
-            show_card(gamespaces.chest_cards[drawn_card - 1])
-        buttons.okay_button.show_button(screen, colors.black, fonts.calibri)
-
     if gamestart:
         turn_displayer(player_list[current_player])
 
@@ -396,7 +415,7 @@ def graphics(gamestart, player_list, rolled):
 
         # Проверява дали играче е в затвора
         if player_list[current_player].is_in_jail:
-            buttons.pay_jail_button.show_button(screen, colors.black, fonts.calibri)
+            buttons.pay_jail_button.show_button(screen, colors.black, fonts.smaller_calibri)
         if (not buying) and player_list[current_player].monopolist and (not building):
             buttons.build_button.show_button(screen, colors.black, fonts.calibri)
         if building:
@@ -409,8 +428,10 @@ def graphics(gamestart, player_list, rolled):
 
         can_mortgage = False
         for space in player_list[current_player].owning:
-            if not space.mortgaged and space.houses == 0:
+            if not space.mortgaged:
                 can_mortgage = True
+            if space.type == "Property" and space.houses == 0:
+                can_mortgage = False
         if rolled and can_mortgage and not mortgaging:
             buttons.mortgage_button.show_button(screen, colors.black, fonts.smaller_calibri)
 
@@ -423,13 +444,20 @@ def graphics(gamestart, player_list, rolled):
 
         can_sell = False
         for space in player_list[current_player].owning:
-            if space.houses:
+            if space.type == "Property" and space.houses:
                 can_sell = True
         if can_sell and rolled and not building:
             buttons.sell_button.show_button(screen, colors.black, fonts.smaller_calibri)
 
     # pygame.draw.circle(screen, colors.red, (75, 740), 2)
     # Използва се за намиране на кооринати
+
+    if drawn_card:
+        if chance:
+            show_card(gamespaces.chance_cards[drawn_card - 1])
+        else:
+            show_card(gamespaces.chest_cards[drawn_card - 1])
+        buttons.okay_button.show_button(screen, colors.black, fonts.calibri)
 
     if quitting:
         info_bg = pygame.image.load(os.path.join('data', 'Assets', 'info_bg.png'))
@@ -665,7 +693,7 @@ def run():
                             dice[0] = random.randint(1, 6)
                             dice[1] = random.randint(1, 6)
                             dice[0] = 0
-                            dice[1] = 7
+                            dice[1] = 12
                             # При чифт
                             if dice[0] == dice[1]:
                                 rolled = False
