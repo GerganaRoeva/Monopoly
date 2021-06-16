@@ -1,5 +1,7 @@
 import pygame
 import os
+from data import fonts
+from data import colors
 
 
 # Клас за игрално поле
@@ -150,12 +152,79 @@ class Station(GameSpace):
     pass
 
 
-class CommunityChest(GameSpace):
-    pass
-
-
 class Chance(GameSpace):
-    pass
+    def __init__(self, id, x, y, cards, tipe):
+        GameSpace.__init__(self, id, x, y, tipe)
+        self.cards = cards
+
+
+class Card:
+    def __init__(self, text, effect):
+        self.text = text
+        self.effect = effect
+
+# Всички карти
+chest_cards = [Card] * 16
+chance_cards = [Card] * 16
+card1 = Card("Продължи към начало!", 1)
+chest_cards[0] = card1
+chance_cards[0] = card1
+card2 = Card("Банкова грешка в твоя полза. Вземи 200!", 2)
+chest_cards[1] = card2
+card3 = Card("Сметки за доктор. Плати 50!", 3)
+chest_cards[2] = card3
+card4 = Card("Крипто валутите най-накрая се отплатиха!\nВземи 50!", 4)
+chest_cards[3] = card4
+card5 = Card("Отиди в затвора!", 5)
+chest_cards[4] = card5
+chance_cards[7] = card5
+card6 = Card("Припомняш си за стари дългове.\nВземи 50 от всеки играч!", 6)
+chest_cards[5] = card6
+card7 = Card("Спечели в казиното! Вземи 100!", 7)
+chest_cards[6] = card7
+card8 = Card("Възстановяване на данък върху дохода.\nВземи 20!", 8)
+chest_cards[7] = card8
+card9 = Card("Днес е твоят рожден ден!\nВземи 10 от всеки играч!", 9)
+chest_cards[8] = card9
+card10 = Card("Застраховката се отплаща! Вземи 150!", 10)
+chest_cards[9] = card10
+card11 = Card("Болнични сметки. Плати 50!", 3)
+chest_cards[10] = card11
+card12 = Card("Училищни сметки. Плати 50!", 3)
+chest_cards[11] = card12
+card13 = Card("Получаваш пари от просене! Вземи 25!", 11)
+chest_cards[12] = card13
+card14 = Card("Спечели състезание по надяждане!\nВземи 10!", 12)
+chest_cards[13] = card14
+card15 = Card("Получаваш наследство! Вземи 100!", 7)
+chest_cards[14] = card15
+card16 = Card("Такси за ремонт! 40 за всяка къща\nи 115 за всеки хотел,\nкоито притежаваш!", 13)
+chest_cards[15] = card16
+chance_cards[1] = card16
+card17 = Card("Продължи до Редута!", 14)
+chance_cards[2] = card17
+card18 = Card("Продължи до Студентски град!", 15)
+chance_cards[3] = card18
+card19 = Card("Ограбваш пияница. Вземи 50!", 4)
+chance_cards[4] = card19
+card20 = Card("Върни се с 3 места назад!", 16)
+chance_cards[5] = card20
+chance_cards[15] = card20
+chance_cards[14] = card20
+card21 = Card("Минувач те пребива нощем и те обира.\nЗагуби 15!", 17)
+chance_cards[6] = card21
+card22 = Card("Продължи до Иван Вазов!", 18)
+chance_cards[8] = card22
+card23 = Card("Намираш банкоти на пода! Получи 25!", 11)
+chance_cards[9] = card23
+card24 = Card("Изтърка билетче и спечели малка награда!\nПолучи 100!", 7)
+chance_cards[10] = card24
+card25 = Card("Скамна лапе през ОЛХ! Получи 150!", 10)
+chance_cards[11] = card25
+card26 = Card("Продължи до Люлин 5", 19)
+chance_cards[12] = card26
+card27 = Card("Скамнаха те в наргиле бар! Загуби 50!", 3)
+chance_cards[13] = card27
 
 
 # Всички полета:
@@ -164,7 +233,7 @@ go = GameSpace(0, 925, 925)
 spaces[0] = go
 brown1 = Property(1, 825, 925, "brown", "Люлин 5")
 spaces[1] = brown1
-cchest1 = GameSpace(2, 740, 925)
+cchest1 = Chance(2, 740, 925, chest_cards, "Chest")
 spaces[2] = cchest1
 brown2 = Property(3, 660, 925, "brown", "Дружба 1", 1)
 spaces[3] = brown2
@@ -174,7 +243,7 @@ station1 = GameSpace(5, 500, 925)
 spaces[5] = station1
 blue1 = Property(6, 420, 925, "blue", "Надежда 2")
 spaces[6] = blue1
-chance1 = GameSpace(7, 340, 925)
+chance1 = Chance(7, 340, 925, chance_cards, "Chance")
 spaces[7] = chance1
 blue2 = Property(8, 260, 925, "blue", "Кранса Поляна")
 spaces[8] = blue2
@@ -194,7 +263,7 @@ station2 = GameSpace(15, 75, 500)
 spaces[15] = station2
 orange1 = Property(16, 75, 420, "orange", "Гоце Делчев")
 spaces[16] = orange1
-cchest2 = GameSpace(17, 75, 340)
+cchest2 = Chance(17, 75, 340, chest_cards, "Chest")
 spaces[17] = cchest2
 orange2 = Property(18, 75, 260, "orange", "Бъкстон")
 spaces[18] = orange2
@@ -204,7 +273,7 @@ free = GameSpace(20, 75, 75)
 spaces[20] = free
 red1 = Property(21, 175, 75, "red", "Слатина")
 spaces[21] = red1
-chance2 = GameSpace(22, 260, 75)
+chance2 = Chance(22, 260, 75, chance_cards, "Chance")
 spaces[22] = chance2
 red2 = Property(23, 340, 75, "red", "Красно Село")
 spaces[23] = red2
@@ -226,13 +295,13 @@ green1 = Property(31, 925, 175, "green", "Яворов")
 spaces[31] = green1
 green2 = Property(32, 925, 260, "green", "Младост 2")
 spaces[32] = green2
-cchest3 = GameSpace(33, 925, 340)
+cchest3 = Chance(33, 925, 340, chest_cards, "Chest")
 spaces[33] = cchest3
 green3 = Property(34, 925, 420, "green", "Изток", 1)
 spaces[34] = green3
 station4 = GameSpace(35, 925, 500)
 spaces[35] = station4
-chance3 = GameSpace(36, 925, 580)
+chance3 = Chance(36, 925, 580, chance_cards, "Chance")
 spaces[36] = chance3
 purple1 = Property(37, 925, 660, "purple", "Лозенец")
 spaces[37] = purple1

@@ -50,8 +50,11 @@ auction_button = Button(colors.gray, colors.black, 520, 680, 150, 50, 'Auction')
 build_button = Button(colors.gray, colors.black, 420, 580, 150, 50, 'Build')
 stop_build_button = Button(colors.gray, colors.black, 420, 680, 150, 50, 'Stop')
 mortgage_button = Button(colors.gray, colors.black, 320, 610, 150, 50, 'Mortgage')
-restor_button = Button(colors.gray, colors.black, 520, 610, 150, 50, 'Restor')
+restore_button = Button(colors.gray, colors.black, 520, 610, 150, 50, 'Restore')
 sell_button = Button(colors.gray, colors.black, 415, 740, 150, 50, 'Sell')
+confirm_yes_button = Button(colors.gray, colors.black, 300, 450, 150, 75, 'YES')
+confirm_no_button = Button(colors.gray, colors.black, 600, 450, 150, 75, 'NO')
+okay_button = Button(colors.gray, colors.black, 420, 650, 150, 75, 'Okay')
 
 
 # Функция за промяна на цвета на всички бутони
@@ -141,13 +144,34 @@ def mouse_hovering(event, pos):
             mortgage_button.color = colors.gray
 
     if event.type == pygame.MOUSEMOTION:
-        if restor_button.is_hovering(pos):
-            restor_button.color = colors.dark_gray
+        if restore_button.is_hovering(pos):
+            restore_button.color = colors.dark_gray
         else:
-            restor_button.color = colors.gray
+            restore_button.color = colors.gray
 
     if event.type == pygame.MOUSEMOTION:
         if sell_button.is_hovering(pos):
             sell_button.color = colors.dark_gray
         else:
             sell_button.color = colors.gray
+
+    if event.type == pygame.MOUSEMOTION:
+        if confirm_no_button.is_hovering(pos):
+            confirm_no_button.color = colors.dark_gray
+        else:
+            confirm_no_button.color = colors.gray
+
+    if event.type == pygame.MOUSEMOTION:
+        if confirm_yes_button.is_hovering(pos):
+            confirm_yes_button.color = colors.dark_gray
+        else:
+            confirm_yes_button.color = colors.gray
+
+    if event.type == pygame.MOUSEMOTION:
+        if okay_button.is_hovering(pos):
+            okay_button.color = colors.dark_gray
+        else:
+            okay_button.color = colors.gray
+
+
+
