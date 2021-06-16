@@ -327,10 +327,9 @@ def property_info(gamespace):
 def show_card(card):
     card_bg = pygame.image.load(os.path.join('data', 'Assets', 'card_bg.png'))
     card_bg = pygame.transform.scale(card_bg, (600, 300))
-    effect_txt = fonts.big_ariel.render(card.text, True, colors.black)
+    effect_txt = fonts.ariel.render(card.text, True, colors.black)
     screen.blit(card_bg, (200, 350))
     screen.blit(effect_txt, (230, 450))
-    pygame.time.wait(5000)
 
 
 # Функция за изобразване за по-чист код и за да не се меша кода
@@ -346,16 +345,12 @@ def graphics(gamestart, player_list, rolled):
 
     screen.blit(board, (0, 0))
 
-    # show_card(gamespaces.card1)
-
     if drawn_card:
-        # print("hree")
         if chance:
             show_card(gamespaces.chance_cards[drawn_card - 1])
         else:
-            show_card(gamespaces.chance_cards[drawn_card - 1])
-        drawn_card = 0
-        chance = False
+            show_card(gamespaces.chest_cards[drawn_card - 1])
+        buttons.okay_button.show_button(screen, colors.black, fonts.calibri)
 
     if gamestart:
         turn_displayer(player_list[current_player])
@@ -501,6 +496,8 @@ def run():
     global mortgaging
     global selling
     global quitting
+    global drawn_card
+    global chance
     throws = 0
     current_music = 0
     restoring = False
@@ -534,6 +531,11 @@ def run():
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if buttons.quit_button.is_hovering(mouse_pos):
                     quitting = True
+
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if buttons.okay_button.is_hovering(mouse_pos):
+                    drawn_card = 0
+                    chance = False
 
             if quitting:
                 if event.type == pygame.MOUSEBUTTONDOWN:
@@ -663,7 +665,7 @@ def run():
                             dice[0] = random.randint(1, 6)
                             dice[1] = random.randint(1, 6)
                             dice[0] = 0
-                            dice[1] = 1
+                            dice[1] = 7
                             # При чифт
                             if dice[0] == dice[1]:
                                 rolled = False

@@ -54,6 +54,7 @@ restore_button = Button(colors.gray, colors.black, 520, 610, 150, 50, 'Restore')
 sell_button = Button(colors.gray, colors.black, 415, 740, 150, 50, 'Sell')
 confirm_yes_button = Button(colors.gray, colors.black, 300, 450, 150, 75, 'YES')
 confirm_no_button = Button(colors.gray, colors.black, 600, 450, 150, 75, 'NO')
+okay_button = Button(colors.gray, colors.black, 420, 650, 150, 75, 'Okay')
 
 
 # Функция за промяна на цвета на всички бутони
@@ -165,6 +166,12 @@ def mouse_hovering(event, pos):
             confirm_yes_button.color = colors.dark_gray
         else:
             confirm_yes_button.color = colors.gray
+
+    if event.type == pygame.MOUSEMOTION:
+        if okay_button.is_hovering(pos):
+            okay_button.color = colors.dark_gray
+        else:
+            okay_button.color = colors.gray
 
 
 
